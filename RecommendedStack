@@ -1,0 +1,194 @@
+On **Ubuntu**, the best approach is to use **KVM for VMs** and **Docker for containers**. This is close to how real infrastructure teams build labs.
+
+## Recommended Stack
+
+### 1. Virtual Machines — KVM + libvirt
+
+Best native hypervisor for Linux.
+
+Tools:
+
+* **KVM**
+* **libvirt**
+* **virt-manager** (GUI)
+* **virsh** (CLI)
+
+Benefits:
+
+* Near-bare-metal performance
+* Snapshots
+* Easy start/stop
+* Widely used in enterprise Linux
+
+Typical commands:
+
+```
+virsh start vm-name
+virsh shutdown vm-name
+virsh list
+```
+
+VMs remain **powered off when not running**, using almost no resources.
+
+---
+
+### 2. Containers — Docker
+
+Use Docker inside either:
+
+Option A (recommended)
+**Dedicated Linux VM for containers**
+
+Option B
+Run Docker **directly on the host**
+
+Tools:
+
+* Docker
+* Docker Compose
+
+Example:
+
+```
+docker compose up -d
+docker compose down
+```
+
+---
+
+### 3. VM Storage
+
+Create a dedicated storage pool.
+
+Common path:
+
+```
+/var/lib/libvirt/images
+```
+
+VM disks use **qcow2**, which supports:
+
+* Snapshots
+* Thin provisioning
+* Compression
+
+---
+
+### 4. Networking
+
+libvirt automatically provides a **NAT network**.
+
+Default network:
+
+```
+virbr0
+```
+
+VMs can talk to:
+
+* Each other
+* Docker containers
+* Internet
+
+For advanced labs you can also create:
+
+* **bridged networks**
+* **internal lab networks**
+
+---
+
+### 5. Optional Infrastructure Tools
+
+Helpful but not required.
+
+**Cockpit**
+Web interface for managing VMs.
+
+Install:
+
+```
+sudo apt install cockpit cockpit-machines
+```
+
+Access:
+
+```
+https://localhost:9090
+```
+
+---
+
+### 6. Resource Management
+
+Control VM resources easily.
+
+Example VM allocation:
+
+| VM                | RAM  | CPU |
+| ----------------- | ---- | --- |
+| AD Server         | 4 GB | 2   |
+| Linux Docker host | 4 GB | 2   |
+| Monitoring        | 4 GB | 2   |
+| Windows client    | 4 GB | 2   |
+
+You can **start only what you need**.
+
+---
+
+## Recommended Lab Architecture
+
+Host Laptop (Ubuntu)
+
+```
+KVM Hypervisor
+│
+├── DC01 (Windows Server - AD)
+├── LNX01 (Docker host)
+│     ├── Grafana
+│     ├── Prometheus
+│     ├── API container
+│     └── Elasticsearch
+├── MON01 (optional monitoring VM)
+└── CLIENT01 (Windows testing workstation)
+```
+
+---
+
+## Tools Summary
+
+| Purpose                 | Tool               |
+| ----------------------- | ------------------ |
+| VM Hypervisor           | KVM                |
+| VM Management           | virt-manager       |
+| CLI management          | virsh              |
+| Container runtime       | Docker             |
+| Container orchestration | Docker Compose     |
+| VM Web UI               | Cockpit (optional) |
+
+---
+
+## Tools I **Do NOT Recommend** for This Lab
+
+Avoid:
+
+* VirtualBox (slow and not enterprise-like)
+* Minikube initially
+* Vagrant (adds complexity)
+* Full Kubernetes cluster early
+
+Those can come later.
+
+---
+
+## One More Suggestion
+
+Your laptop lab will become **much easier to manage** if we also add:
+
+* **Infrastructure diagram**
+* **IP plan**
+* **DNS structure**
+* **Git repo for configs**
+
+This makes the project look **very strong on a resume**.
+
+When you're ready, we can design the **exact lab architecture step-by-step**. It only takes about **30 minutes to plan properly**.
