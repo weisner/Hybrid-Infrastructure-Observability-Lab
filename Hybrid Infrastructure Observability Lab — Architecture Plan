@@ -1,0 +1,368 @@
+We’ll design this like a **small enterprise environment**, but sized for a laptop.
+
+---
+
+# Hybrid Infrastructure Observability Lab — Architecture Plan
+
+## 1. Host System
+
+**Host OS**
+
+* Ubuntu 22.04/24.04
+
+**Hypervisor**
+
+* KVM + libvirt
+
+**Management Tools**
+
+* virt-manager
+* virsh
+* Docker + Docker Compose
+
+Host role:
+
+* Hypervisor
+* Optional Docker host for lightweight services
+
+---
+
+# 2. Virtual Machine Layout
+
+Keep it **simple but realistic**.
+
+| VM       | OS             | Role                       | RAM | CPU |
+| -------- | -------------- | -------------------------- | --- | --- |
+| DC01     | Windows Server | Active Directory / LDAP    | 4GB | 2   |
+| APP01    | Ubuntu Server  | Docker host + REST API     | 4GB | 2   |
+| MON01    | Ubuntu Server  | Monitoring stack           | 4GB | 2   |
+| CLIENT01 | Windows 11     | Domain joined test machine | 4GB | 2   |
+
+Total needed while running all:
+**16GB RAM**
+
+You can run only what you need.
+
+---
+
+# 3. Network Design
+
+Create a **dedicated lab network**.
+
+```
+10.10.10.0/24
+```
+
+| Host     | IP          |
+| -------- | ----------- |
+| DC01     | 10.10.10.10 |
+| APP01    | 10.10.10.20 |
+| MON01    | 10.10.10.30 |
+| CLIENT01 | 10.10.10.40 |
+
+Gateway:
+
+```
+10.10.10.1
+```
+
+---
+
+# 4. Active Directory Environment
+
+Domain:
+
+```
+lab.local
+```
+
+Objects to create:
+
+Users
+
+```
+labadmin
+monitoring_svc
+api_svc
+testuser1
+testuser2
+```
+
+Groups
+
+```
+ServerAdmins
+Developers
+Monitoring
+```
+
+Testing goals:
+
+* LDAP authentication
+* Linux domain join
+* API authentication via LDAP
+
+---
+
+# 5. Docker Environment (APP01)
+
+Install:
+
+```
+Docker
+Docker Compose
+```
+
+Containers:
+
+| Container | Purpose           |
+| --------- | ----------------- |
+| nginx     | reverse proxy     |
+| fastapi   | REST API          |
+| postgres  | database          |
+| redis     | caching           |
+| cadvisor  | container metrics |
+
+Example stack:
+
+```
+docker-compose.yml
+```
+
+Services:
+
+```
+api.lab.local
+metrics.lab.local
+```
+
+---
+
+# 6. REST API
+
+Build a **small internal service**.
+
+Language options:
+
+* Python FastAPI (recommended)
+* Node Express
+* Go
+
+Endpoints:
+
+```
+GET /health
+GET /users
+POST /login
+GET /metrics
+```
+
+Features:
+
+* LDAP authentication
+* PostgreSQL backend
+* Prometheus metrics endpoint
+
+---
+
+# 7. Monitoring Stack (MON01)
+
+Install via Docker.
+
+Components:
+
+| Tool          | Purpose            |
+| ------------- | ------------------ |
+| Prometheus    | metrics collection |
+| Grafana       | dashboards         |
+| Loki          | logs               |
+| Promtail      | log shipping       |
+| Node Exporter | server metrics     |
+
+Monitor:
+
+* VM CPU
+* RAM
+* Disk
+* Docker containers
+* API latency
+* AD availability
+
+---
+
+# 8. Observability Goals
+
+Dashboards:
+
+**Infrastructure**
+
+* VM CPU
+* Memory
+* Disk
+* Network
+
+**Containers**
+
+* Container CPU
+* Memory
+* Restarts
+
+**Application**
+
+* API latency
+* Error rate
+* Request count
+
+---
+
+# 9. LDAP Integration Testing
+
+Test Linux auth.
+
+On APP01:
+
+```
+sssd
+realmd
+ldap-utils
+```
+
+Test:
+
+```
+ldapsearch
+id testuser1
+```
+
+Goal:
+
+Linux system authenticates against **Active Directory**.
+
+---
+
+# 10. Failure Testing (Important)
+
+Simulate outages.
+
+Examples:
+
+Stop container
+
+```
+docker stop api
+```
+
+Stop AD
+
+```
+shutdown DC01
+```
+
+Break DNS.
+
+Observe alerts in Grafana.
+
+---
+
+# 11. Git Repository Structure
+
+Create project repo:
+
+```
+infra-lab
+```
+
+Structure:
+
+```
+infra-lab
+│
+├── docker
+│   ├── api
+│   └── monitoring
+│
+├── ansible
+│
+├── diagrams
+│
+├── scripts
+│
+└── documentation
+```
+
+---
+
+# 12. Documentation
+
+Write documentation for:
+
+* Network layout
+* VM configuration
+* Docker architecture
+* Monitoring dashboards
+* LDAP integration
+
+This makes the project **resume-worthy**.
+
+---
+
+# Final Architecture Diagram
+
+```
+Ubuntu Laptop
+│
+├─ KVM Hypervisor
+│
+├─ DC01
+│   Active Directory
+│   LDAP
+│
+├─ APP01
+│   Docker
+│   REST API
+│   PostgreSQL
+│
+├─ MON01
+│   Prometheus
+│   Grafana
+│   Loki
+│
+└─ CLIENT01
+    Windows domain client
+```
+
+---
+
+# What This Project Demonstrates
+
+This lab shows experience with:
+
+* Virtual infrastructure
+* Windows + Linux administration
+* Active Directory
+* LDAP
+* Docker
+* REST APIs
+* Observability
+* Monitoring stacks
+* Infrastructure troubleshooting
+
+This maps extremely well to roles like:
+
+* Systems Engineer
+* Infrastructure Engineer
+* Observability Engineer
+* Platform Engineer
+
+---
+
+✅ **Next step (important):**
+
+Before building anything we should define:
+
+**1️⃣ Exact VM specs**
+**2️⃣ Docker services list**
+**3️⃣ Monitoring stack deployment**
+**4️⃣ Build order**
+
+That will save you **hours of rebuilds later**.
